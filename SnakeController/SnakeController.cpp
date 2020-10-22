@@ -65,49 +65,78 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
     }
 }
 
+Controller::Segment Controller::createNewHead()
+{
+    Segment const& currentHead = m_segments.front();
+
+    Segment newHead;
+    newHead.x = currentHead.x + ((m_currentDirection & Direction_LEFT) ? (m_currentDirection & Direction_DOWN) ? 1 : -1 : 0);
+    newHead.y = currentHead.y + (not (m_currentDirection & Direction_LEFT) ? (m_currentDirection & Direction_DOWN) ? 1 : -1 : 0);
+    newHead.ttl = currentHead.ttl;
+    return newHead;
+}
+
+bool Controller::checkIfSnakeHasBitItself(Segment newHead)
+{
+    for (auto segment : m_segments)
+    {
+        if (segment.x == newHead.x and segment.y == newHead.y) {
+            m_scorePort.send(std::make_unique<EventT<LooseInd>>());
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Controller::handleIfScored(Segment newHead)
+{
+    if (std::make_pair(newHead.x, newHead.y) == m_foodPosition) {
+        m_scorePort.send(std::make_unique<EventT<ScoreInd>>());
+        m_foodPort.send(std::make_unique<EventT<FoodReq>>());
+        return true;
+    }
+    else return false;
+}
+bool Controller::checkIfOutOfBounds(Segment newHead)
+{
+    if (newHead.x < 0 or newHead.y < 0 or
+                         newHead.x >= m_mapDimension.first or
+                         newHead.y >= m_mapDimension.second) {
+        m_scorePort.send(std::make_unique<EventT<LooseInd>>());
+        return true;;
+    }
+    return false;
+}
+
+void Controller::displaySnake()
+{
+    for (auto &segment : m_segments) {
+        if (not --segment.ttl) {
+            DisplayInd l_evt;
+            l_evt.x = segment.x;
+            l_evt.y = segment.y;
+            l_evt.value = Cell_FREE;
+
+            m_displayPort.send(std::make_unique<EventT<DisplayInd>>(l_evt));
+        }
+    }
+}
+
 void Controller::receive(std::unique_ptr<Event> e)
 {
     try {
         auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*e);
 
-        Segment const& currentHead = m_segments.front();
-
-        Segment newHead;
-        //newHead.x = currentHead.x + ((m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
-        //newHead.y = currentHead.y + (not (m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
-        newHead.x = currentHead.x + ((m_currentDirection & Direction_LEFT) ? (m_currentDirection & Direction_DOWN) ? 1 : -1 : 0);
-        newHead.y = currentHead.y + (not (m_currentDirection & Direction_LEFT) ? (m_currentDirection & Direction_DOWN) ? 1 : -1 : 0);
-        newHead.ttl = currentHead.ttl;
-
-        bool lost = false;
-
-        for (auto segment : m_segments) {
-            if (segment.x == newHead.x and segment.y == newHead.y) {
-                m_scorePort.send(std::make_unique<EventT<LooseInd>>());
-                lost = true;
-                break;
-            }
-        }
+        Segment newHead = createNewHead();
+        bool lost = checkIfSnakeHasBitItself(newHead);
 
         if (not lost) {
-            if (std::make_pair(newHead.x, newHead.y) == m_foodPosition) {
-                m_scorePort.send(std::make_unique<EventT<ScoreInd>>());
-                m_foodPort.send(std::make_unique<EventT<FoodReq>>());
-            } else if (newHead.x < 0 or newHead.y < 0 or
-                       newHead.x >= m_mapDimension.first or
-                       newHead.y >= m_mapDimension.second) {
-                m_scorePort.send(std::make_unique<EventT<LooseInd>>());
-                lost = true;
-            } else {
-                for (auto &segment : m_segments) {
-                    if (not --segment.ttl) {
-                        DisplayInd l_evt;
-                        l_evt.x = segment.x;
-                        l_evt.y = segment.y;
-                        l_evt.value = Cell_FREE;
-
-                        m_displayPort.send(std::make_unique<EventT<DisplayInd>>(l_evt));
-                    }
+            if(!handleIfScored(newHead))
+            {
+                lost = checkIfOutOfBounds(newHead);
+                if(!lost)
+                {
+                    displaySnake();
                 }
             }
         }
