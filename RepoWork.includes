@@ -1,0 +1,10 @@
+googletest-master/googlemock/include/gmock
+googletest-master/googlemock/include/gmock/internal
+googletest-master/googlemock/include/gmock/internal/custom
+googletest-master/googlemock/test
+googletest-master/googletest/include/gtest
+googletest-master/googletest/include/gtest/internal
+googletest-master/googletest/include/gtest/internal/custom
+googletest-master/googletest/samples
+googletest-master/googletest/src
+googletest-master/googletest/test
