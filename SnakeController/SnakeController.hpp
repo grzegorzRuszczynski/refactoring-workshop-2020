@@ -36,6 +36,7 @@ private:
     void handleDirectionChange(const DirectionInd&);
     void handleFoodPositionChange(const FoodInd& receivedFood);
     void handleNewFood(const FoodResp& requestedFood);
+    EventT<Event>* castEvent(std::unique_ptr<Event>* event);
 
     struct Segment
     {

@@ -213,10 +213,35 @@ Controller::Segment Controller::getNewHead() const
     return newHead;
 }
 
+
+EventT<Event>* Controller::castEvent(std::unique_ptr<Event>* event)
+{
+    std::uint32_t msg = (*event)->getMessageId();
+    switch(msg)
+    {
+        case 0x20:
+        return EventT<Snake::TimeoutInd>;
+
+        /*case 0x10:
+        return Snake::DirectionInd();
+
+        case 0x40:
+        return Snake::FoodInd();
+
+        case 0x20:
+        return Snake::TimeoutInd();*/
+    }
+
+}
+
 void Controller::receive(std::unique_ptr<Event> e)
 {
     try {
-        handleTimePassed(*dynamic_cast<EventT<TimeoutInd> const&>(*e));
+
+        EventT<Event> event = castEvent(&e);
+
+        //handleTimePassed(*dynamic_cast<EventT<TimeoutInd> const&>(*e));
+        handleTimePassed(*event);
     } catch (std::bad_cast&) {
         try {
             handleDirectionChange(*dynamic_cast<EventT<DirectionInd> const&>(*e));
