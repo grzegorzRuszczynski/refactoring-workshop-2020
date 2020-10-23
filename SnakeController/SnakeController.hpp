@@ -6,6 +6,7 @@
 
 #include "IEventHandler.hpp"
 #include "SnakeInterface.hpp"
+#include "snakebody.hpp"
 
 class Event;
 class IPort;
@@ -33,6 +34,7 @@ public:
     void receive(std::unique_ptr<Event> e) override;
 
 private:
+    SnakeBody sBody;
     IPort& m_displayPort;
     IPort& m_foodPort;
     IPort& m_scorePort;

@@ -1,10 +1,12 @@
 #include "SnakeController.hpp"
+#include "snakebody.hpp"
 
 #include <algorithm>
 #include <sstream>
 
 #include "EventT.hpp"
 #include "IPort.hpp"
+#include "map.hpp"
 
 namespace Snake
 {
@@ -31,6 +33,7 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
 
     if (w == 'W' and f == 'F' and s == 'S') {
         m_mapDimension = std::make_pair(width, height);
+        Map wholeMap(width,height,foodX,foodY);
         m_foodPosition = std::make_pair(foodX, foodY);
 
         istr >> d;
@@ -55,6 +58,7 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
         while (length--) {
             Segment seg;
             istr >> seg.x >> seg.y;
+//            sBody.addSegment(seg.x, seg.y);
             m_segments.push_back(seg);
         }
     } else {
